@@ -38,7 +38,7 @@
             const blogTitle = document.getElementById('blog-title').value;
             const blogText = document.getElementById('blog').value;
             const blogImage = document.getElementById('photo').files[0];
-            const blogVideo = document.getElementById('blog-video').files[0];
+            const vimeoEmbedCode = document.getElementById('vimeo-embed').value;
             const address = document.getElementById('address').value;
             const blogPostDiv = document.getElementById('blog-post');
             
@@ -51,14 +51,11 @@
             titleElement.textContent = blogTitle;
             blogPostDiv.appendChild(titleElement);
 
-            // Add video content
-            if (blogVideo) {
-                const videoElement = document.createElement('video');
-                videoElement.controls = true;
-                videoElement.src = URL.createObjectURL(blogVideo);
-                videoElement.style.width = '640px';  // Set the width of the video
-                videoElement.style.height = '360px';  // Set the height of the video
-                blogPostDiv.appendChild(videoElement);
+            // Add Vimeo embed code
+            if (vimeoEmbedCode) {
+                const embedDiv = document.createElement('div');
+                embedDiv.innerHTML = vimeoEmbedCode;  // Insert the full embed code directly
+                blogPostDiv.appendChild(embedDiv);
             }
 
             // Add text content
@@ -87,6 +84,8 @@
             // Send the data to Google Sheets
             sendToGoogleSheets(blogTitle, blogText, address);
         }
+
+
 
         async function uploadToImgbb(imageFile) {
             const apiKey = '51719444556e62bb0a59ae15a1976b11';  // Replace with your Imgbb API key
@@ -145,8 +144,9 @@
         <label for="blog-title">Blog Title:</label>
         <input type="text" id="blog-title" name="title" placeholder="Enter your blog title"><br><br>
 
-        <label for="blog-video">Upload Video:</label>
-        <input type="file" id="blog-video" name="video" accept="video/*"><br><br>
+        <label for="vimeo-embed">Enter Vimeo Embed Code:</label>
+        <textarea id="vimeo-embed" name="vimeo-embed" rows="4" cols="50" placeholder="Paste the full Vimeo embed code here"></textarea><br><br>
+        
 
         <label for="blog">Write your blog below!</label><br>
         <textarea id="blog" name="blog" rows="4" cols="50"></textarea><br><br>
@@ -166,3 +166,4 @@
 
 </body>
 </html>
+
