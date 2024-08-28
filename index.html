@@ -11,6 +11,10 @@
             height: 300px;  /* Adjust height as needed */
             overflow: hidden;
         }
+        #email-form {
+            margin-top: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -35,8 +39,18 @@
         <p>Amuz 360 is dedicated to providing an immersive experience through 360-degree images and videos. Whether you want to share breathtaking panoramic views, document your adventures, or simply explore the world from your screen, our platform is here to make it easy and accessible for everyone.</p>
     </section>
 
+    <section id="email-form">
+        <h3>Subscribe for Updates</h3>
+        <p>Enter your Gmail to receive updates and exclusive content.</p>
+        <form action="send_link.php" method="POST">
+            <input type="email" name="email" placeholder="Enter your Gmail" required>
+            <button type="submit">Send Link</button>
+        </form>
+    </section>
+
     <footer>
         <p>&copy; 2024 Amuz 360. All rights reserved.</p>
     </footer>
 </body>
 </html>
+
