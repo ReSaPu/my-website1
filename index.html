@@ -11,10 +11,6 @@
             height: 300px;  /* Adjust height as needed */
             overflow: hidden;
         }
-        #email-form {
-            margin-top: 20px;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
@@ -32,6 +28,7 @@
         <h1>Welcome to Amuz 360</h1>
         <div id="video-container">
             <iframe src="https://player.vimeo.com/video/207747480?h=41becc1107" width="640" height="300" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; gyroscope; accelerometer" allowfullscreen></iframe>
+        </div>
     </section>
 
     <section class="purpose">
@@ -39,18 +36,41 @@
         <p>Amuz 360 is dedicated to providing an immersive experience through 360-degree images and videos. Whether you want to share breathtaking panoramic views, document your adventures, or simply explore the world from your screen, our platform is here to make it easy and accessible for everyone.</p>
     </section>
 
-    <section id="email-form">
-        <h3>Subscribe for Updates</h3>
-        <p>Enter your Gmail to receive updates and exclusive content.</p>
-        <form action="send_link.php" method="POST">
-            <input type="email" name="email" placeholder="Enter your Gmail" required>
-            <button type="submit">Send Link</button>
+    <section class="email-signup">
+        <h2>Get Started with Amuz 360</h2>
+        <p>Enter your Gmail to receive a link to create your own 360° content:</p>
+        <form id="email-form">
+            <input type="email" id="user-email" name="email" placeholder="Enter your Gmail" required>
+            <button type="button" onclick="sendEmail()">Send Link</button>
         </form>
     </section>
 
     <footer>
         <p>&copy; 2024 Amuz 360. All rights reserved.</p>
     </footer>
+
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init("AUL0eeCc5oMD_2XkL");  // Replace "YOUR_USER_ID" with your actual user ID from EmailJS
+        })();
+
+        function sendEmail() {
+            const email = document.getElementById('user-email').value;
+            const templateParams = {
+                user_email: email,
+                link: "https://www.amuz360.com/create.html"  // Link to your create page
+            };
+
+            emailjs.send('service_q54padc', 'template_xkf2yfo', templateParams)
+                .then(function(response) {
+                    alert('The link to the create page has been sent to your Gmail.');
+                }, function(error) {
+                    alert('There was an error sending the email: ' + error.text);
+                });
+        }
+    </script>
 </body>
 </html>
 
