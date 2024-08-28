@@ -50,12 +50,8 @@
     </footer>
 
     <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.emailjs.com/dist/email.min.js"></script>
-    <script type="text/javascript">
-        (function() {
-            emailjs.init("AUL0eeCc5oMD_2XkL");  // Replace "YOUR_USER_ID" with your actual user ID from EmailJS
-        })();
-
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <script>
         function sendEmail() {
             const email = document.getElementById('user-email').value;
             const templateParams = {
@@ -73,4 +69,3 @@
     </script>
 </body>
 </html>
-
