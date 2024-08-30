@@ -1,10 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="home.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Amuz 360 - Home</title>
+    <link rel="stylesheet" href="home.css">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAehBGEnWk88ptkuIVbotDmvod_bwUyC1Q",
+            authDomain: "amuz-internship.firebaseapp.com",
+            projectId: "amuz-internship",
+            storageBucket: "amuz-internship.appspot.com",
+            messagingSenderId: "304617709062",
+            appId: "1:304617709062:web:dca88238c2047645a62d87",
+            measurementId: "G-7CT4EC65G8"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        emailjs.init("AUL0eeCc5oMD_2XkL");
+
+        // Function to generate a unique token
+        function generateUniqueToken() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Function to send a unique link to the user
+        window.sendUniqueLink = async function() {
+            const email = document.getElementById('email').value;
+
+            if (!email) {
+                alert("Please enter your email address.");
+                return;
+            }
+
+            try {
+                // Generate a unique token
+                const token = generateUniqueToken();
+                const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+
+                // Save the token to Firestore
+                console.log("Saving token to Firestore:", token);
+                await addDoc(collection(db, "links"), {
+                    token: token,
+                    expiresAt: expiresAt.toISOString()
+                });
+
+                // Construct the unique URL
+                const uniqueURL = `https://resapu.github.io/my-website1/create.html?uid=${token}`;
+                console.log("Unique URL:", uniqueURL);
+
+                // Send email
+                const response = await emailjs.send("service_q54padc", "template_xkf2yfo", {
+                    to_email: email,
+                    link: uniqueURL
+                });
+                
+                console.log("EmailJS Response:", response);
+
+                alert("A unique link has been sent to your email address.");
+            } catch (error) {
+                console.error("Error sending email:", error);
+                alert("There was an error sending the email. Please try again.");
+            }
+        }
+    </script>
     <style>
         #video-container {
             width: 100%;
@@ -40,41 +110,17 @@
         <h2>Get Started with Amuz 360</h2>
         <p>Enter your Gmail to receive a link to create your own 360° content:</p>
         <form id="email-form">
-            <input type="email" id="user-email" name="email" placeholder="Enter your Gmail" required>
-            <button type="button" onclick="sendEmail()">Send Link</button>
+            <input type="email" id="email" name="email" placeholder="Enter your Gmail" required>
+            <button type="button" onclick="sendUniqueLink()">Send Link</button>
         </form>
     </section>
 
     <footer>
         <p>&copy; 2024 Amuz 360. All rights reserved.</p>
     </footer>
-
-    <!-- EmailJS SDK -->
-    <script type="text/javascript"
-        src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js">
-    </script>
-    <script type="text/javascript">
-        (function(){
-         emailjs.init({
-            publicKey: "AUL0eeCc5oMD_2XkL",
-        });
-        })();
-    </script>
-    <script>
-        function sendEmail() {
-            const email = document.getElementById('user-email').value;
-            const templateParams = {
-                user_email: email,
-                link: "https://www.amuz360.com/create.html"  // Link to your create page
-            };
-
-            emailjs.send('service_q54padc', 'template_xkf2yfo', templateParams)
-                .then(function(response) {
-                    alert('The link to the create page has been sent to your Gmail.');
-                }, function(error) {
-                    alert('There was an error sending the email: ' + error.text);
-                });
-        }
-    </script>
 </body>
 </html>
+
+
+
+
