@@ -4,16 +4,98 @@
     <link rel="stylesheet" href="blog.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amuz 360</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
-    <script type="text/javascript" src="https://platform-api.sharethis.com/js/sharethis.js#property=66c9466405ca740019059a71&product=inline-share-buttons&source=platform" async="async"></script>
-    <script>
+    <title>Amuz 360 - Create</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap" async defer></script>
+    <script type="module">
+        // Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAehBGEnWk88ptkuIVbotDmvod_bwUyC1Q",
+            authDomain: "amuz-internship.firebaseapp.com",
+            projectId: "amuz-internship",
+            storageBucket: "amuz-internship.appspot.com",
+            messagingSenderId: "304617709062",
+            appId: "1:304617709062:web:dca88238c2047645a62d87",
+            measurementId: "G-7CT4EC65G8"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let token; // The token from the URL
+        let tokenDocRef; // Reference to the Firestore document
+
+        // Get the token from the URL query parameter
+        function getTokenFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('uid'); // Assuming 'uid' is used in the link
+        }
+
+        // Check if the token is valid
+        async function validateToken() {
+            token = getTokenFromURL();
+            if (!token) {
+                alert("Invalid or missing token.");
+                return false;
+            }
+
+            tokenDocRef = doc(db, "links", token);
+            const tokenDoc = await getDoc(tokenDocRef);
+
+            if (!tokenDoc.exists()) {
+                alert("This token does not exist.");
+                return false;
+            }
+
+            const tokenData = tokenDoc.data();
+            const expiresAt = new Date(tokenData.expiresAt);
+
+            if (expiresAt < new Date()) {
+                alert("This token has expired.");
+                return false;
+            }
+
+            return true;
+        }
+
+        // Load the existing data associated with this token
+        async function loadContent() {
+            const tokenDoc = await getDoc(tokenDocRef);
+            const data = tokenDoc.data();
+
+            document.getElementById('blog-title').value = data.blogTitle || '';
+            document.getElementById('vimeo-embed').value = data.vimeoEmbedCode || '';
+            document.getElementById('blog').value = data.blogText || '';
+            document.getElementById('address').value = data.address || '';
+        }
+
+        // Save the content associated with this token
+        async function saveContent() {
+            const blogTitle = document.getElementById('blog-title').value;
+            const vimeoEmbedCode = document.getElementById('vimeo-embed').value;
+            const blogText = document.getElementById('blog').value;
+            const address = document.getElementById('address').value;
+
+            await setDoc(tokenDocRef, {
+                blogTitle: blogTitle,
+                vimeoEmbedCode: vimeoEmbedCode,
+                blogText: blogText,
+                address: address
+            }, { merge: true });
+
+            alert("Your content has been saved.");
+        }
+
+        // Google Maps and Geocoding
         let map;
         let geocoder;
 
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
-                center: {lat: -34.397, lng: 150.644},
+                center: { lat: -34.397, lng: 150.644 },
                 zoom: 8
             });
             geocoder = new google.maps.Geocoder();
@@ -21,7 +103,7 @@
 
         function geocodeAddress() {
             const address = document.getElementById('address').value;
-            geocoder.geocode({'address': address}, function(results, status) {
+            geocoder.geocode({ 'address': address }, function (results, status) {
                 if (status === 'OK') {
                     map.setCenter(results[0].geometry.location);
                     new google.maps.Marker({
@@ -34,6 +116,47 @@
             });
         }
 
+        async function uploadToImgbb(imageFile) {
+            const apiKey = '51719444556e62bb0a59ae15a1976b11';  // Replace with your Imgbb API key
+            const formData = new FormData();
+            formData.append('image', imageFile);
+
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                return result.data.url;  // Return the URL of the uploaded image
+            } else {
+                throw new Error('Failed to upload image');
+            }
+        }
+
+        function sendToGoogleSheets(blogTitle, blogText, address) {
+            const url = "https://script.google.com/macros/s/AKfycbxqzTL5jgFdiVDuUYLHK9zKznIIrf3jfpdeTuFzvVoXLivMrIMH79Ojrw7XAGj_T4lWgA/exec";  // Replace with the URL of your deployed Google Apps Script web app
+
+            const data = {
+                blogTitle: blogTitle,
+                blogText: blogText,
+                address: address
+            };
+
+            const params = new URLSearchParams(data);
+
+            fetch(url, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: params
+            })
+                .then(response => console.log("Data sent to Google Sheets"))
+                .catch(error => console.error('Error:', error));
+        }
+
         async function createBlogPost() {
             const blogTitle = document.getElementById('blog-title').value;
             const blogText = document.getElementById('blog').value;
@@ -41,7 +164,7 @@
             const vimeoEmbedCode = document.getElementById('vimeo-embed').value;
             const address = document.getElementById('address').value;
             const blogPostDiv = document.getElementById('blog-post');
-            
+
             // Clear previous content
             blogPostDiv.innerHTML = '';
 
@@ -76,95 +199,48 @@
             // Add location (map) content
             const mapDiv = document.createElement('div');
             mapDiv.id = 'map';
-            mapDiv.className = 'blog-map';
+            mapDiv.style.width = '100%';
+            mapDiv.style.height = '300px';
             blogPostDiv.appendChild(mapDiv);
 
-            initMap();
+            geocodeAddress();  // Geocode the address and update the map
 
-            // Send the data to Google Sheets
-            sendToGoogleSheets(blogTitle, blogText, address);
+            sendToGoogleSheets(blogTitle, blogText, address);  // Send data to Google Sheets
+            saveContent();  // Save content to Firestore
         }
 
-
-
-        async function uploadToImgbb(imageFile) {
-            const apiKey = '51719444556e62bb0a59ae15a1976b11';  // Replace with your Imgbb API key
-            const formData = new FormData();
-            formData.append('image', imageFile);
-
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                return result.data.url;  // Return the URL of the uploaded image
-            } else {
-                throw new Error('Failed to upload image');
+        window.onload = async function () {
+            if (await validateToken()) {
+                await loadContent();
             }
-        }
-
-        function sendToGoogleSheets(blogTitle, blogText, address) {
-            const url = "https://script.google.com/macros/s/AKfycbyHsv011pEZ0SA0Ot1RYJUqprISMEWynleuBVGg2MYwwdvuAIp1PI5axOKhIvTYWSzanw/exec";  // Replace with the URL of your deployed Google Apps Script web app
-
-            const data = {
-                blogTitle: blogTitle,
-                blogText: blogText,
-                address: address
-            };
-
-            const params = new URLSearchParams(data);
-
-            fetch(url, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: params
-            })
-            .then(response => console.log("Data sent to Google Sheets"))
-            .catch(error => console.error('Error:', error));
-        }
+        };
     </script>
 </head>
 <body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href ="index.html">Home</a></li>
-                <li><a href ="create.html">Create</a></li>
-                <li><a href="contact.html">Contact</a></li>
-            </ul>
-        </nav>
-        <h1>Create</h1>
-    </header>
-    <section class="bloginput">
-        <label for="blog-title">Blog Title:</label>
-        <input type="text" id="blog-title" name="title" placeholder="Enter your blog title"><br><br>
+    <div class="container">
+        <h1>Create a Blog Post</h1>
 
-        <label for="vimeo-embed">Enter Vimeo Embed Code:</label>
-        <textarea id="vimeo-embed" name="vimeo-embed" rows="4" cols="50" placeholder="Paste the full Vimeo embed code here"></textarea><br><br>
-        
+        <label for="blog-title">Title:</label>
+        <input type="text" id="blog-title" placeholder="Enter the blog title">
 
-        <label for="blog">Write your blog below!</label><br>
-        <textarea id="blog" name="blog" rows="4" cols="50"></textarea><br><br>
+        <label for="vimeo-embed">Vimeo Embed Code:</label>
+        <input type="text" id="vimeo-embed" placeholder="Enter Vimeo embed code">
 
-        <label for="photo">Upload Photo:</label>
-        <input type="file" id="photo" name="photo" accept="image/*"><br><br>
+        <label for="blog">Blog Text:</label>
+        <textarea id="blog" rows="10" placeholder="Write your blog here..."></textarea>
 
-        <label for="address">Enter your location:</label>
-        <input type="text" id="address" placeholder="Enter a location">
-        <button onclick="geocodeAddress()">Get Location</button><br><br>
+        <label for="photo">Upload Image:</label>
+        <input type="file" id="photo">
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" placeholder="Enter the location address">
+        <button onclick="geocodeAddress()">Find Location on Map</button>
+
+        <div id="map" style="width:100%;height:300px;"></div>
 
         <button onclick="createBlogPost()">Create Blog Post</button>
-    </section>
 
-    <section id="blog-post"></section>
-    <div class="sharethis-inline-share-buttons"></div>
-
+        <div id="blog-post"></div>
+    </div>
 </body>
 </html>
-
-
