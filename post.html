@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="blog.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Post</title>
+    <style>
+        #post-container {
+            margin: 20px;
+        }
+        #share-buttons {
+            margin-top: 20px;
+        }
+    </style>
+    <!-- ShareThis Script -->
+    <script src="https://platform-api.sharethis.com/js/sharethis.js#property=66c9466405ca740019059a71&product=inline-share-buttons" async="async"></script>
+</head>
+<body>
+    <h1>Blog Post</h1>
+    <div id="post-container">
+        <!-- Post content will be dynamically inserted here -->
+    </div>
+
+    <div id="share-buttons">
+        <!-- Social media share buttons -->
+        <div class="sharethis-inline-share-buttons"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCUm02w4bfMZXF9gYp8N__Zz0nCI1Wlfk",
+            authDomain: "post-storage-18fd3.firebaseapp.com",
+            projectId: "post-storage-18fd3",
+            storageBucket: "post-storage-18fd3.appspot.com",
+            messagingSenderId: "350528800013",
+            appId: "1:350528800013:web:a04ee9dd4381407d825c44",
+            measurementId: "G-GP4DH4E3S0"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
+
+        async function loadPost() {
+            // Get the post ID from the URL query parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const postId = urlParams.get('id');
+
+            if (!postId) {
+                console.error('No post ID found in URL');
+                return;
+            }
+
+            try {
+                // Fetch the blog post data from Firestore
+                const postDoc = doc(db, 'posts', postId);
+                const postSnap = await getDoc(postDoc);
+
+                if (postSnap.exists()) {
+                    const postData = postSnap.data();
+
+                    // Insert post content into the page
+                    const postContainer = document.getElementById('post-container');
+                    postContainer.innerHTML = `
+                        <h1>${postData.blogTitle}</h1>
+                        ${postData.vimeoEmbedCode ? `<div>${postData.vimeoEmbedCode}</div>` : ''}
+                        <p>${postData.blogText}</p>
+                        ${postData.blogImage ? `<img src="${postData.blogImage}" alt="Blog Image" style="width: 100%; max-width: 600px;">` : ''}
+                        <div id="map"></div>
+                    `;
+
+                    // Initialize map if address is provided
+                    if (postData.address) {
+                        initMap(postData.address);
+                    }
+                } else {
+                    console.error('No such document!');
+                }
+            } catch (error) {
+                console.error('Error fetching document:', error);
+            }
+        }
+
+        function initMap(address) {
+            const mapDiv = document.getElementById('map');
+            const map = new google.maps.Map(mapDiv, {
+                zoom: 8,
+                center: { lat: -34.397, lng: 150.644 }
+            });
+            const geocoder = new google.maps.Geocoder();
+
+            geocoder.geocode({ address: address }, function (results, status) {
+                if (status === 'OK') {
+                    map.setCenter(results[0].geometry.location);
+                    new google.maps.Marker({
+                        map: map,
+                        position: results[0].geometry.location
+                    });
+                } else {
+                    console.error('Geocode was not successful for the following reason: ' + status);
+                }
+            });
+        }
+
+        // Load the post when the page loads
+        window.onload = loadPost;
+    </script>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+</body>
+</html>
