@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="blog.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Blog Post</title>
+    <link rel="stylesheet" href="blog.css">
     <style>
         #loading-container {
             display: none;
@@ -29,7 +29,7 @@
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
 
         // Your web app's Firebase configuration
@@ -48,40 +48,36 @@
         const db = getFirestore(app);
         const analytics = getAnalytics(app);
 
-        // Function to check if the token is valid and not expired
         async function checkTokenValidity() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('uid');
 
             if (!token) {
-                alert('Invalid token.');
-                window.location.href = 'index.html';
+                alert("No token found in URL.");
+                window.location.href = "error.html";  // Redirect to an error page
                 return;
             }
 
-            const tokenDoc = await getDoc(doc(db, 'links', token));
+            const tokenDoc = await getDoc(doc(db, "links", token));
+
             if (!tokenDoc.exists()) {
-                alert('Invalid or expired token.');
-                window.location.href = 'index.html';
+                alert("Invalid or expired token.");
+                window.location.href = "error.html";  // Redirect to an error page
                 return;
             }
 
             const tokenData = tokenDoc.data();
             const expiresAt = new Date(tokenData.expiresAt);
-            const now = new Date();
+            const currentTime = new Date();
 
-            if (now > expiresAt) {
-                alert('This link has expired.');
-                window.location.href = 'index.html';
-                return;
+            if (currentTime > expiresAt) {
+                alert("This link has expired.");
+                window.location.href = "error.html";  // Redirect to an error page
+            } else {
+                console.log("Token is valid.");
+                // Token is valid, proceed with the rest of the blog creation logic
             }
-
-            // Token is valid and not expired, allow the user to proceed
-            console.log('Token is valid');
         }
-
-        // Call the checkTokenValidity function when the page loads
-        window.onload = checkTokenValidity;
 
         async function createBlogPost() {
             console.log('Create Blog Post button clicked');
@@ -147,6 +143,9 @@
 
         // Make the function available globally
         window.createBlogPost = createBlogPost;
+
+        // Call checkTokenValidity on page load
+        window.onload = checkTokenValidity;
     </script>
 </head>
 <body>
