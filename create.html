@@ -4,88 +4,93 @@
     <link rel="stylesheet" href="blog.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amuz 360</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
-    <script type="text/javascript" src="https://platform-api.sharethis.com/js/sharethis.js#property=66c9466405ca740019059a71&product=inline-share-buttons&source=platform" async="async"></script>
-    <script>
-        let map;
-        let geocoder;
-
-        function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: {lat: -34.397, lng: 150.644},
-                zoom: 8
-            });
-            geocoder = new google.maps.Geocoder();
+    <title>Create Blog Post</title>
+    <style>
+        #loading-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            text-align: center;
+            padding-top: 20%;
+            font-size: 1.5em;
         }
-
-        function geocodeAddress() {
-            const address = document.getElementById('address').value;
-            geocoder.geocode({'address': address}, function(results, status) {
-                if (status === 'OK') {
-                    map.setCenter(results[0].geometry.location);
-                    new google.maps.Marker({
-                        map: map,
-                        position: results[0].geometry.location
-                    });
-                } else {
-                    alert('Geocode was not successful for the following reason: ' + status);
-                }
-            });
+        #progress-bar {
+            width: 0;
+            height: 30px;
+            background-color: #4caf50;
+            text-align: center;
+            color: #fff;
         }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCUm02w4bfMZXF9gYp8N__Zz0nCI1Wlfk",
+            authDomain: "post-storage-18fd3.firebaseapp.com",
+            projectId: "post-storage-18fd3",
+            storageBucket: "post-storage-18fd3.appspot.com",
+            messagingSenderId: "350528800013",
+            appId: "1:350528800013:web:a04ee9dd4381407d825c44",
+            measurementId: "G-GP4DH4E3S0"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
 
         async function createBlogPost() {
+            console.log('Create Blog Post button clicked');
+            
             const blogTitle = document.getElementById('blog-title').value;
             const blogText = document.getElementById('blog').value;
             const blogImage = document.getElementById('photo').files[0];
             const vimeoEmbedCode = document.getElementById('vimeo-embed').value;
             const address = document.getElementById('address').value;
-            const blogPostDiv = document.getElementById('blog-post');
-            
-            // Clear previous content
-            blogPostDiv.innerHTML = '';
 
-            // Add title content
-            const titleElement = document.createElement('h1');
-            titleElement.className = 'blog-title';
-            titleElement.textContent = blogTitle;
-            blogPostDiv.appendChild(titleElement);
+            // Show loading progress
+            const loadingContainer = document.getElementById('loading-container');
+            const progressBar = document.getElementById('progress-bar');
+            loadingContainer.style.display = 'block';
 
-            // Add Vimeo embed code
-            if (vimeoEmbedCode) {
-                const embedDiv = document.createElement('div');
-                embedDiv.innerHTML = vimeoEmbedCode;  // Insert the full embed code directly
-                blogPostDiv.appendChild(embedDiv);
-            }
-
-            // Add text content
-            const textParagraph = document.createElement('p');
-            textParagraph.textContent = blogText;
-            blogPostDiv.appendChild(textParagraph);
-
-            // Add image content
+            // Upload the image and get the URL
+            let imageUrl = '';
             if (blogImage) {
-                const imageUrl = await uploadToImgbb(blogImage);
-                const imageElement = document.createElement('img');
-                imageElement.src = imageUrl;
-                imageElement.style.width = '320px';  // Set the width of the image
-                imageElement.style.height = 'auto';  // Maintain aspect ratio
-                blogPostDiv.appendChild(imageElement);
+                console.log('Uploading image...');
+                progressBar.style.width = '50%';  // Update progress bar to 50%
+                imageUrl = await uploadToImgbb(blogImage);
+                console.log('Image uploaded:', imageUrl);
             }
 
-            // Add location (map) content
-            const mapDiv = document.createElement('div');
-            mapDiv.id = 'map';
-            mapDiv.className = 'blog-map';
-            blogPostDiv.appendChild(mapDiv);
+            // Generate a unique ID for the post
+            const postId = Date.now().toString();  // Simple example; consider using UUID or another method
 
-            initMap();
+            // Store the blog post data in Firestore
+            await setDoc(doc(db, 'posts', postId), {
+                blogTitle,
+                blogText,
+                blogImage: imageUrl,
+                vimeoEmbedCode,
+                address
+            });
 
-            // Send the data to Google Sheets
-            sendToGoogleSheets(blogTitle, blogText, address);
+            // Update progress bar to 100%
+            progressBar.style.width = '100%';
+            setTimeout(() => {
+                loadingContainer.style.display = 'none';
+                console.log('Redirecting to post.html?id=' + postId);
+                window.location.href = 'post.html?id=' + postId;
+            }, 500);  // Delay for a smooth transition
         }
-
-
 
         async function uploadToImgbb(imageFile) {
             const apiKey = '51719444556e62bb0a59ae15a1976b11';  // Replace with your Imgbb API key
@@ -105,33 +110,12 @@
             }
         }
 
-        function sendToGoogleSheets(blogTitle, blogText, address) {
-            const url = "https://script.google.com/macros/s/AKfycbyHsv011pEZ0SA0Ot1RYJUqprISMEWynleuBVGg2MYwwdvuAIp1PI5axOKhIvTYWSzanw/exec";  // Replace with the URL of your deployed Google Apps Script web app
-
-            const data = {
-                blogTitle: blogTitle,
-                blogText: blogText,
-                address: address
-            };
-
-            const params = new URLSearchParams(data);
-
-            fetch(url, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: params
-            })
-            .then(response => console.log("Data sent to Google Sheets"))
-            .catch(error => console.error('Error:', error));
-        }
+        // Make the function available globally
+        window.createBlogPost = createBlogPost;
     </script>
 </head>
 <body>
-        <h1>Create</h1>
-    </header>
+    <h1>Create Blog Post</h1>
     <section class="bloginput">
         <label for="blog-title">Blog Title:</label>
         <input type="text" id="blog-title" name="title" placeholder="Enter your blog title"><br><br>
@@ -139,7 +123,6 @@
         <label for="vimeo-embed">Enter Vimeo Embed Code:</label>
         <textarea id="vimeo-embed" name="vimeo-embed" rows="4" cols="50" placeholder="Paste the full Vimeo embed code here"></textarea><br><br>
         
-
         <label for="blog">Write your blog below!</label><br>
         <textarea id="blog" name="blog" rows="4" cols="50"></textarea><br><br>
 
@@ -152,9 +135,10 @@
 
         <button onclick="createBlogPost()">Create Blog Post</button>
     </section>
-
-    <section id="blog-post"></section>
-    <div class="sharethis-inline-share-buttons"></div>
-
+    <div id="loading-container">
+        <div>Creating your blog post...</div>
+        <div id="progress-bar"></div>
+    </div>
 </body>
 </html>
+
