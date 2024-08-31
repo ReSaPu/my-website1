@@ -47,7 +47,7 @@
             try {
                 // Generate a unique token
                 const token = generateUniqueToken();
-                const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+                const expiresAt = new Date(Date.now() ); // 24 hours from now
 
                 // Save the token to Firestore
                 await addDoc(collection(db, "links"), {
