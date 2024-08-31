@@ -51,40 +51,56 @@
         async function checkTokenExpiration() {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('uid');
-
+        
             if (!token) {
+                console.error("No token found in URL.");
                 alert("No token found in URL.");
                 window.location.href = "error.html";  // Redirect to an error page
                 return;
             }
-
+        
             try {
                 // Fetch the token document from Firestore
                 const tokenDoc = await getDoc(doc(db, "links", token));
-
+        
                 if (!tokenDoc.exists()) {
+                    console.error("Token document does not exist.");
                     alert("Invalid token.");
                     window.location.href = "error.html";  // Redirect to an error page
                     return;
                 }
-
+        
                 // Check if the token has expired
                 const tokenData = tokenDoc.data();
+                console.log("Token Data:", tokenData);  // Log the token data for debugging
+        
+                if (!tokenData.expiresAt) {
+                    console.error("No expiration date found in token data.");
+                    alert("Token data is incomplete.");
+                    window.location.href = "error.html";  // Redirect to an error page
+                    return;
+                }
+        
                 const expiresAt = new Date(tokenData.expiresAt);
                 const currentTime = new Date();
-
+        
+                console.log("Current Time:", currentTime);
+                console.log("Expiration Time:", expiresAt);
+        
                 if (currentTime > expiresAt) {
+                    console.log("Token has expired.");
                     alert("This link has expired.");
                     window.location.href = "error.html";  // Redirect to an error page
                 } else {
-                    // Token is valid; proceed with the rest of the page functionality
                     console.log("Token is valid.");
+                    // Token is valid; proceed with the rest of the page functionality
                 }
             } catch (error) {
                 console.error("Error checking token expiration:", error);
                 alert("There was an error validating the token. Please try again.");
             }
         }
+
 
         async function createBlogPost() {
             console.log('Create Blog Post button clicked');
