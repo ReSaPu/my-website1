@@ -50,15 +50,13 @@
                 const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
                 // Save the token to Firestore
-                console.log("Saving token to Firestore:", token);
                 await addDoc(collection(db, "links"), {
                     token: token,
-                    expiresAt: expiresAt.toISOString()
+                    expiresAt: expiresAt.toISOString()  // Store as ISO string
                 });
 
                 // Construct the unique URL
-                const uniqueURL = `resapu.github.io/my-website1/create.html?uid=${token}`;
-                console.log("Unique URL:", uniqueURL);
+                const uniqueURL = `https://resapu.github.io/my-website1/create.html?uid=${token}`;
 
                 // Send email
                 const response = await emailjs.send("service_q54padc", "template_xkf2yfo", {
@@ -66,8 +64,6 @@
                     link: uniqueURL
                 });
                 
-                console.log("EmailJS Response:", response);
-
                 alert("A unique link has been sent to your email address.");
             } catch (error) {
                 console.error("Error sending email:", error);
