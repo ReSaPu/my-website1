@@ -48,6 +48,44 @@
         const db = getFirestore(app);
         const analytics = getAnalytics(app);
 
+        async function checkTokenExpiration() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('uid');
+
+    if (!token) {
+        alert("No token found in URL.");
+        window.location.href = "error.html";  // Redirect to an error page
+        return;
+    }
+
+    try {
+        // Fetch the token document from Firestore
+        const tokenDoc = await getDoc(doc(db, "links", token));
+
+        if (!tokenDoc.exists()) {
+            alert("Invalid token.");
+            window.location.href = "error.html";  // Redirect to an error page
+            return;
+        }
+
+        // Check if the token has expired
+        const tokenData = tokenDoc.data();
+        const expiresAt = new Date(tokenData.expiresAt);
+        const currentTime = new Date();
+
+        if (currentTime > expiresAt) {
+            alert("This link has expired.");
+            window.location.href = "error.html";  // Redirect to an error page
+        } else {
+            // Token is valid; proceed with the rest of the page functionality
+            console.log("Token is valid.");
+        }
+    } catch (error) {
+        console.error("Error checking token expiration:", error);
+        alert("There was an error validating the token. Please try again.");
+    }
+}
+
         async function createBlogPost() {
             console.log('Create Blog Post button clicked');
             
