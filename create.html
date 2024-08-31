@@ -48,40 +48,45 @@
         const analytics = getAnalytics(app);
 
         async function checkTokenValidity() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('uid');
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('uid');
 
-            if (!token) {
-                alert("No token found in URL.");
-                window.location.href = "error.html";  // Redirect to an error page
-                return;
-            }
+    if (!token) {
+        alert("No token found in URL.");
+        window.location.href = "error.html";  // Redirect to an error page
+        return;
+    }
 
-            try {
-                const tokenDoc = await getDoc(doc(db, "links", token));
+    console.log("Token from URL:", token);  // Log the token being checked
 
-                if (!tokenDoc.exists()) {
-                    alert("Invalid or expired token.");
-                    window.location.href = "error.html";  // Redirect to an error page
-                    return;
-                }
+    try {
+        const tokenDoc = await getDoc(doc(db, "links", token));
 
-                const tokenData = tokenDoc.data();
-                const expiresAt = new Date(tokenData.expiresAt);
-                const currentTime = new Date();
-
-                if (currentTime > expiresAt) {
-                    alert("This link has expired.");
-                    window.location.href = "error.html";  // Redirect to an error page
-                } else {
-                    console.log("Token is valid.");
-                    // Token is valid, enable the blog creation form
-                }
-            } catch (error) {
-                console.error("Error checking token validity:", error);
-                alert("There was an error validating the token. Please try again.");
-            }
+        if (!tokenDoc.exists()) {
+            console.log("Token document does not exist.");
+            alert("Invalid or expired token.");
+            window.location.href = "error.html";  // Redirect to an error page
+            return;
         }
+
+        const tokenData = tokenDoc.data();
+        const expiresAt = new Date(tokenData.expiresAt);
+        const currentTime = new Date();
+
+        if (currentTime > expiresAt) {
+            console.log("Token has expired.");
+            alert("This link has expired.");
+            window.location.href = "error.html";  // Redirect to an error page
+        } else {
+            console.log("Token is valid.");
+            // Token is valid, enable the blog creation form
+        }
+    } catch (error) {
+        console.error("Error checking token validity:", error);
+        alert("There was an error validating the token. Please try again.");
+    }
+}
+
 
         async function uploadToImgbb(imageFile) {
             const apiKey = '51719444556e62bb0a59ae15a1976b11';  // Replace with your Imgbb API key
